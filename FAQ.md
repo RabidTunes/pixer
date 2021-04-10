@@ -17,6 +17,6 @@ Yes
 
 Yes
 
-# ...will you expand this section with more questions that people may have after using your plugin?
+# ...will you at least expand this section with more questions that people may have after using your addon?
 
 Yes
