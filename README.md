@@ -1,8 +1,14 @@
 # Pixel Texturizer
 
+[Click here to download latest version](https://github.com/RabidTunes/pixeltexturizer/releases/download/0.9/RabidPixelTexturizer-0.9.zip)
+
 This is a Blender Addon that makes your model ✨pixel perfect✨
 
 This means that if you apply a pixel art texture the pixels will be of a consistent size across your model.
+
+# HOW TO INSTALL
+
+Download the py file and install it from preferences. <sub><sup>(I'm too lazy to explain this but it is the typical procedure just install it as any other addon)</sup></sub>
 
 # HOW TO USE
 
