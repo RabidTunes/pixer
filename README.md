@@ -8,7 +8,7 @@ This means that if you apply a pixel art texture the pixels will be of a consist
 
 # HOW TO INSTALL
 
-Download the py file and install it from preferences. <sub><sup>(I'm too lazy to explain this but it is the typical procedure just install it as any other addon)</sup></sub>
+Download the zip file and install it from preferences. <sub><sup>(I'm too lazy to explain this but it is the typical procedure just install it as any other addon)</sup></sub>
 
 # HOW TO USE
 
