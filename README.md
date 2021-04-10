@@ -2,7 +2,7 @@
 
 This is a Blender Addon that makes your model ✨pixel perfect✨
 
-That means that if you apply a pixel art texture the pixels will be of a consistent size across your model.
+This means that if you apply a pixel art texture the pixels will be of a consistent size across your model.
 
 # HOW TO USE
 
