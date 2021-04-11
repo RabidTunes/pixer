@@ -24,7 +24,3 @@ For best results, you need to adjust all the vertices to the grid (edit mode > e
 If vertices are not adjusted to the grid, it will probably work anyways but I haven't tested what happens then 👀
 
 Video explanation: Coming 🔜
-
-# DISCLAIMER
-
-Certains parts of this addon were copied and modified from other addons. Check [this document]() to get more info
