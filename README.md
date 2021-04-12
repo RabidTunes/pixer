@@ -1,4 +1,4 @@
-# Pixel Texturizer
+# Pixel Texturizer (v0.9 pre-release, it does still have some bugs to fix)
 
 [Click here to download latest version](https://github.com/RabidTunes/pixeltexturizer/releases/download/0.9/RabidPixelTexturizer-0.9.zip)
 
