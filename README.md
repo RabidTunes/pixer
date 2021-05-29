@@ -1,4 +1,4 @@
-# Pixer (v0.9 pre-release, it does still have some bugs to fix)
+# Pixer (v0.95 pre-release, fixed a lot of bugs, should work better now but still checking for bugs and corner cases)
 
 [Click here to download latest version](https://github.com/RabidTunes/pixeltexturizer/releases/download/0.9/RabidPixelTexturizer-0.9.zip)
 
