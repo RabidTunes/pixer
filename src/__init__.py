@@ -17,7 +17,7 @@ from .pixeroperator import PixerOperator
 bl_info = {
     "name": "Pixer",
     "author": "Rabid",
-    "version": (0, 9),
+    "version": (0, 95),
     "blender": (2, 92, 0),
     "description": "Adjusts the UVs from a model to set the textures to pixels",
     "wiki_url": "https://github.com/RabidTunes/pixeltexturizer",
