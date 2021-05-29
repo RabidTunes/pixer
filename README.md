@@ -1,6 +1,6 @@
 # Pixer (v0.95 pre-release, fixed a lot of bugs, should work better now but still checking for bugs and corner cases)
 
-[Click here to download latest version](https://github.com/RabidTunes/pixeltexturizer/releases/download/0.9/RabidPixelTexturizer-0.9.zip)
+[Click here to go to the latest release and download the zip for the latest version](https://github.com/RabidTunes/pixer/releases/tag/0.95)
 
 This is a Blender Addon that makes your textures' model ✨pixel perfect✨
 
