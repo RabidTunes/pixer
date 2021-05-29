@@ -12,10 +12,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import bpy
-from .pixeltexoperator import PixelTexturizerOperator
+from .pixeroperator import PixerOperator
 
 bl_info = {
-    "name": "PIXX",
+    "name": "Pixer",
     "author": "Rabid",
     "version": (0, 9),
     "blender": (2, 92, 0),
@@ -25,8 +25,8 @@ bl_info = {
 }
 
 
-class PixelTexturizerProperties(bpy.types.PropertyGroup):
-    pixels_in_3D_unit: bpy.props.IntProperty(name="PIXONGOS per 3D unit",
+class PixerProperties(bpy.types.PropertyGroup):
+    pixels_in_3D_unit: bpy.props.IntProperty(name="Pixels/unit",
                                              description="How many squares are inside a 3D unit (you can use "
                                                          "ortographic view to check this)",
                                              default=10, min=1)
@@ -38,43 +38,43 @@ class PixelTexturizerProperties(bpy.types.PropertyGroup):
                                            default=False)
 
 
-class PixelTexturizerMainPanel(bpy.types.Panel):
-    bl_label = "PIXX"
-    bl_idname = "PIXX"
+class PixerMainPanel(bpy.types.Panel):
+    bl_label = "Pixer"
+    bl_idname = "Pixer"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "PIXX"
+    bl_category = "Pixer"
 
     def draw(self, context: bpy.context):
         layout = self.layout
         scene = context.scene
-        pixel_texturizer = scene.pixel_texturizer
+        pixer = scene.pixer
 
-        layout.prop(pixel_texturizer, "pixels_in_3D_unit")
-        layout.prop(pixel_texturizer, "texture_size")
-        layout.prop(pixel_texturizer, "selection_only")
+        layout.prop(pixer, "pixels_in_3D_unit")
+        layout.prop(pixer, "texture_size")
+        layout.prop(pixer, "selection_only")
 
         row = layout.row()
         row.label(icon='WORLD_DATA')
-        row.operator(text="Pixelize!", operator="rabid.pixel_texturizer")
+        row.operator(text="Pixelize!", operator="rabid.pixer")
         row.label(icon='WORLD_DATA')
 
 
-classes = [PixelTexturizerProperties, PixelTexturizerMainPanel, PixelTexturizerOperator]
+classes = [PixerProperties, PixerMainPanel, PixerOperator]
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.Scene.pixel_texturizer = bpy.props.PointerProperty(type=PixelTexturizerProperties)
+    bpy.types.Scene.pixer = bpy.props.PointerProperty(type=PixerProperties)
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-    del bpy.types.Scene.pixel_texturizer
+    del bpy.types.Scene.pixer
 
 
 if __name__ == "__main__":

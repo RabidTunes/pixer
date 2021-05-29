@@ -2,7 +2,7 @@
 # This module takes care of stitching 2 faces together once their UVs are all set
 from decimal import Decimal
 from mathutils import Vector, Matrix
-from math import pi, radians, sin, cos
+from math import radians, sin, cos
 
 from .geometryutils import segments_intersect, segments_intersection_point
 from .xface import XFace

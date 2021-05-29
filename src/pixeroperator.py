@@ -5,13 +5,14 @@ import bmesh
 import bpy
 from bmesh.types import BMesh
 
+from .benchmarker import print_bench, bench_start, bench_end
 from .facestitcher import stitch, StitchingError, stitch_by_vertex
 from .pixeluvsolver import *
 
 
-class PixelTexturizerOperator(bpy.types.Operator):
-    bl_label = "PIXX"
-    bl_idname = "rabid.pixel_texturizer"
+class PixerOperator(bpy.types.Operator):
+    bl_label = "Pixer"
+    bl_idname = "rabid.pixer"
 
     # Default values
     pixels_per_3d_unit = 10
@@ -21,13 +22,14 @@ class PixelTexturizerOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        pixel_texturizer = scene.pixel_texturizer
+        pixer = scene.pixer
         try:
-            self.run(context, pixel_texturizer.pixels_in_3D_unit, pixel_texturizer.texture_size,
-                     pixel_texturizer.selection_only)
+            self.run(context, pixer.pixels_in_3D_unit, pixer.texture_size,
+                     pixer.selection_only)
             self.report({'INFO'}, "All ok!")
         except Exception as exception:
             self.report({'ERROR'}, str(exception))
+        print_bench()
         return {'FINISHED'}
 
     def run(self, context, pixels_in_3d_unit, texture_size, selection_only):
@@ -37,32 +39,40 @@ class PixelTexturizerOperator(bpy.types.Operator):
         self.only_selection = selection_only
 
         log(INFO, "Loading model data...")
+        bench_start("Load model")
         obj = context.active_object
         me = obj.data
         bm = bmesh.from_edit_mesh(me)
         uv_layer = bm.loops.layers.uv.verify()
         XFace.init(uv_layer)
+        bench_end("Load model")
 
         log(INFO, "Validating model...")
         self._validate(bm)
 
         log(INFO, "Parsing faces...")
+        bench_start("Parse faces")
         top, lateral, down = self._get_xfaces(bm)
+        bench_end("Parse faces")
 
         log(INFO, "Solving faces...")
+        bench_start("Solve and stitch faces")
         if self.separate_by_plane:
             uv_islands = self._solve(lateral)
             uv_islands = self._solve(top, uv_islands)
             self._solve(down, uv_islands)
         else:
             self._solve(lateral + top + down)
+        bench_end("Solve and stitch faces")
 
         log(INFO, "Packing UVs...")
+        bench_start("UV Packing")
         self._pack_together(context, selection_only)
 
         log(INFO, "Snapping packed UVs to pixel again...")
         for xface in lateral + top + down:
             snap_face_uv_to_pixel(xface, selection_only, self.pixel_2d_size)
+        bench_end("UV Packing")
         bmesh.update_edit_mesh(me)
 
     def _validate(self, bm: BMesh):
@@ -109,7 +119,9 @@ class PixelTexturizerOperator(bpy.types.Operator):
                 while len(next_xfaces) > 0:
                     current = next_xfaces.pop(0)
                     log(DEBUG, "Solving face " + str(current))
-                    new_solve_face(current, self.pixels_per_3d_unit, self.pixel_2d_size)
+                    bench_start("Solve face " + str(current.get_face().index), "Solve and stitch faces")
+                    solve_face(current, self.pixels_per_3d_unit, self.pixel_2d_size)
+                    bench_end("Solve face " + str(current.get_face().index), "Solve and stitch faces")
 
                     stitched = False
                     linked_solved, linked_unsolved = self._get_linked_faces_for(current)
@@ -128,6 +140,7 @@ class PixelTexturizerOperator(bpy.types.Operator):
                         if current.get_common_edges(linked):
                             linked_edge_unsolved.append(linked)
 
+                    bench_start("Stitch face " + str(current.get_face().index), "Solve and stitch faces")
                     for linked in linked_edge_solved:
                         try:
                             log(DEBUG, "Stitching face " + str(current) + " to near linked face " + str(linked))
@@ -163,6 +176,7 @@ class PixelTexturizerOperator(bpy.types.Operator):
                                 uv_islands_by_xface[current.get_face()] = uv_islands_by_xface[linked.get_face()]
                                 stitched = True
                                 break
+                    bench_end("Stitch face " + str(current.get_face().index), "Solve and stitch faces")
 
                     if not stitched:
                         log(DEBUG, "Face " + str(current) + " was not stitched to any near solved faces")
@@ -239,37 +253,3 @@ class PixelTexturizerOperator(bpy.types.Operator):
             bpy.context.area.ui_type = prev_ui_type
         else:
             self.report({"ERROR"}, "Error while packing UVs. No island selected")
-
-    def _old_solve(self, xfaces_lists):
-        me = None
-        solved_faces = set()
-        uv_islands = []
-        facecount = 0
-        facemax = 3
-        for xface_list in xfaces_lists:
-            for xface in xface_list:
-                if not xface.get_face() in solved_faces:
-                    new_uv_island = []
-                    processing_xfaces = [xface]
-                    while len(processing_xfaces) > 0:
-                        current_xface = processing_xfaces.pop(0)
-                        new_solve_face(current_xface, self.pixels_per_3d_unit, self.pixel_2d_size)
-                        facecount += 1
-                        solved_faces.add(current_xface.get_face())
-                        new_uv_island.append(current_xface.get_face())
-                        linked_xfaces = current_xface.get_linked_xfaces()
-                        for linked_xface in linked_xfaces:
-                            if not self.only_selection or linked_xface.get_face().select:
-                                if not (linked_xface.get_face() in solved_faces or linked_xface in processing_xfaces):
-                                    if linked_xface.get_plane() == xface.get_plane():
-                                        processing_xfaces.append(linked_xface)
-                        processing_xfaces = sorted(processing_xfaces,
-                                                   key=lambda sorting_xface: sorting_xface.get_score(),
-                                                   reverse=True)
-                        log(DEBUG, "After solving, these are the processing xfaces")
-                        for p in processing_xfaces:
-                            log(DEBUG, str(p))
-                        if facecount >= facemax > 0:
-                            bmesh.update_edit_mesh(me)
-                            raise Exception
-                    uv_islands.append(new_uv_island)
