@@ -24,6 +24,8 @@ Download the zip file and install it from preferences. <sub><sup>(I'm too lazy t
 
 - (Optional) Mark "Selection only" if you want to pixelize only selected faces. Otherwise, pixer will pixelize every face
 
+- SUPER IMPORTANT APPLY ALL TRANSFORMS!. Pixer uses the edge length for its calculations, if you make some modifications on Object mode like scale, the edge lengths will not be correct and your model won't be pixelated correctly! (i got very frustrated developing this because this apply transforms thing got me thinking i had a massive bug, but in the end it was only the transform)
+
 - Press "Pixelize" button
 
 It is very important that you adjust all the vertices to the grid (edit mode > enter ortographic view > press shift + S > selected to grid)
