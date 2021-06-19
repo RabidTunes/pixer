@@ -224,6 +224,8 @@ class PixerOperator(bpy.types.Operator):
         c = 0
 
         for face in bm.faces:
+            if not selection_only:
+                face.select = True
             if not selection_only or face.select:
                 for loop in face.loops:
                     luv = loop[uv_layer]

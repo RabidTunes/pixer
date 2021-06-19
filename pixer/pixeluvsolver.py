@@ -68,6 +68,10 @@ def _pixels_2d(length2d: float, pixel_2d_size: float):
 
 
 def _fix_edge(xface: XFace, edge: int, pixels_per_3d: int, pixel_2d_size: float, adjust: int, horizontally: bool):
+    if horizontally:
+        adjust = adjust * sign(xface.get_uv(edge + 1).x - xface.get_uv(edge).x)
+    else:
+        adjust = adjust * sign(xface.get_uv(edge + 1).y - xface.get_uv(edge).y)
     next_vertex = xface.get_index(edge + 1)
 
     vertices_allowed_to_move = _get_number_of_vertices_allowed_to_move(xface, pixels_per_3d, pixel_2d_size, edge,
