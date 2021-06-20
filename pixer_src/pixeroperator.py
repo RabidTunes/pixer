@@ -1,13 +1,12 @@
-from math import sqrt
-from typing import Tuple, List
-
 import bmesh
 import bpy
-from bmesh.types import BMesh
-
+from typing import Tuple, List, Dict
+from bmesh.types import BMesh, BMFace
 from .benchmarker import print_bench, bench_start, bench_end
 from .facestitcher import stitch, StitchingError, stitch_by_vertex
 from .pixeluvsolver import *
+from .uvpacker import simple_uv_packing
+from .validator import validate
 
 
 class PixerOperator(bpy.types.Operator):
@@ -48,7 +47,7 @@ class PixerOperator(bpy.types.Operator):
         bench_end("Load model")
 
         log(INFO, "Validating model...")
-        self._validate(bm)
+        validate(bm)
 
         log(INFO, "Parsing faces...")
         bench_start("Parse faces")
@@ -58,33 +57,22 @@ class PixerOperator(bpy.types.Operator):
         log(INFO, "Solving faces...")
         bench_start("Solve and stitch faces")
         if self.separate_by_plane:
-            uv_islands = self._solve(lateral)
-            uv_islands = self._solve(top, uv_islands)
-            self._solve(down, uv_islands)
+            uv_islands_map = self._solve(lateral)
+            uv_islands_map = self._solve(top, uv_islands_map)
+            uv_islands_map = self._solve(down, uv_islands_map)
         else:
-            self._solve(lateral + top + down)
+            uv_islands_map = self._solve(lateral + top + down)
         bench_end("Solve and stitch faces")
 
         log(INFO, "Packing UVs...")
         bench_start("UV Packing")
-        self._pack_together(context, selection_only)
+        simple_uv_packing(uv_islands_map, self.pixel_2d_size)
 
         log(INFO, "Snapping packed UVs to pixel again...")
         for xface in lateral + top + down:
             snap_face_uv_to_pixel(xface, selection_only, self.pixel_2d_size)
         bench_end("UV Packing")
         bmesh.update_edit_mesh(me)
-
-    def _validate(self, bm: BMesh):
-        vertices = set()
-        for vert in bm.verts:
-            if vert.co.copy().freeze() in vertices:
-                log(ERROR, "The vert " + str(vert.co.copy().freeze()) + " is already in the set, "
-                                                                        "it is probably a duplicate!")
-            vertices.add(vert.co.copy().freeze())
-
-        if len(bm.verts) != len(vertices):
-            raise Exception("There are duplicated vertices! Cannot proceed!")
 
     def _get_xfaces(self, bm: BMesh):
         lateral_xfaces = []
@@ -110,7 +98,8 @@ class PixerOperator(bpy.types.Operator):
             log(DEBUG, xface)
         return top_xfaces, lateral_xfaces, down_xfaces
 
-    def _solve(self, all_faces: [XFace], uv_islands_by_xface=None):
+    def _solve(self, all_faces: [XFace],
+               uv_islands_by_xface: Dict[BMFace, List[XFace]] = None) -> Dict[BMFace, List[XFace]]:
         if uv_islands_by_xface is None:
             uv_islands_by_xface = {}
         for xface in all_faces:
@@ -208,50 +197,3 @@ class PixerOperator(bpy.types.Operator):
                 else:
                     linked_unsolved.add(linked_xface)
         return list(linked_solved), list(linked_unsolved)
-
-    def _pack_together(self, context, selection_only):
-        prev_area_type = bpy.context.area.type
-        prev_ui_type = bpy.context.area.ui_type
-        bpy.context.area.type = 'IMAGE_EDITOR'
-        bpy.context.area.ui_type = 'UV'
-        obj = context.active_object
-        me = obj.data
-        bm = bmesh.from_edit_mesh(me)
-        uv_layer = bm.loops.layers.uv.verify()
-        pivot_ori = bpy.context.space_data.pivot_point
-
-        uv_verts = []
-        c = 0
-
-        for face in bm.faces:
-            if not selection_only:
-                face.select = True
-            if not selection_only or face.select:
-                for loop in face.loops:
-                    luv = loop[uv_layer]
-                    luv.select = True
-                    if luv.select and luv.uv not in uv_verts and c != 2:
-                        uv_verts.append(luv.uv)
-                        c += 1
-
-        if len(uv_verts) == 2:
-            distance = sqrt((uv_verts[0].x - uv_verts[1].x) ** 2 + (uv_verts[0].y - uv_verts[1].y) ** 2)
-
-            bpy.ops.uv.pack_islands(rotate=False, margin=0.05)
-
-            distance2 = sqrt((uv_verts[0].x - uv_verts[1].x) ** 2 + (uv_verts[0].y - uv_verts[1].y) ** 2)
-
-            scale = distance / distance2
-            bpy.context.space_data.pivot_point = 'CURSOR'
-            bpy.ops.uv.cursor_set(location=(0, 0))
-            bpy.ops.uv.select_linked()
-            bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL',
-                                     orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
-                                     mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH',
-                                     proportional_size=1, use_proportional_connected=False,
-                                     use_proportional_projected=False)
-            bpy.context.space_data.pivot_point = '' + pivot_ori + ''
-            bpy.context.area.type = prev_area_type
-            bpy.context.area.ui_type = prev_ui_type
-        else:
-            self.report({"ERROR"}, "Error while packing UVs. No island selected")

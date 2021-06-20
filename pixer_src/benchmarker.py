@@ -1,5 +1,4 @@
 import time
-
 from .logger import *
 
 start_times = {}
